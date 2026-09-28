@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.11.0] — 2026-09-28
+
+### Changed
+- **Frontend upgraded to Next.js 16** (#399). No change to how PRISM is used or configured; the app is built on the current framework release and the trailing newline the upgrade dropped is back.
+
+### Fixed
+- **Two React Compiler findings that were real bugs**, not noise: a ref written during render and an effect that could run against a stale value.
+
+### Security
+- Dependency bumps carried in by Dependabot: maigret to 0.6.6, and the frontend's postcss, autoprefixer, @types/node, nanoid, brace-expansion and baseline-browser-mapping. CodeQL actions moved to 4.38.2.
+
+---
+
 ## [2.10.0] — 2026-09-22
 
 Mostly contributor work. Names are on the pull requests.
