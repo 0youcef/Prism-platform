@@ -1,6 +1,6 @@
 import os
 import requests
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Tuple
 import sys
 sys.path.append('..')
 from config import Colors, USER_AGENT
@@ -38,6 +38,7 @@ class GitHubRecon:
             "total_stars": 0,
             "top_languages": [],
             "emails": [],
+            "commit_emails_checked": None,
             "error": None,
         }
 
@@ -80,12 +81,13 @@ class GitHubRecon:
             }
             if u.get("email"):
                 result["emails"].append(u["email"])
+            result["commit_emails_checked"] = False
 
-            repos = self._get_repos(username)
-            result["repo_count"] = len(repos)
+            repos, repos_failure = self._get_repos(username)
+            result["repo_count"] = None if repos_failure else len(repos)
             lang_count: Dict[str, int] = {}
             stars = 0
-            for repo in repos:
+            for repo in repos or []:
                 stars += repo.get("stargazers_count", 0) or 0
                 lang = repo.get("language")
                 if lang:
@@ -96,17 +98,28 @@ class GitHubRecon:
                 for k, v in sorted(lang_count.items(), key=lambda x: x[1], reverse=True)[:8]
             ]
 
-            for email in self._emails_from_events(username):
-                if email not in result["emails"]:
-                    result["emails"].append(email)
+            commit_emails, events_failure = self._emails_from_events(username)
+            if not events_failure:
+                for email in commit_emails or []:
+                    if email not in result["emails"]:
+                        result["emails"].append(email)
+                result["commit_emails_checked"] = True
 
+            failure = repos_failure or events_failure
+            if failure:
+                return annotate(result, *failure)
             result["status"] = OK
         except Exception as e:
             return annotate(result, ERROR, str(e)[:200])
 
         return result
 
-    def _get_repos(self, username: str) -> List[Dict[str, Any]]:
+    def _failure(self, status_code: int) -> Tuple[str, str]:
+        if status_code in (403, 429):
+            return RATE_LIMITED, "GitHub API rate limit reached - set GITHUB_TOKEN to raise it"
+        return ERROR, f"GitHub API returned {status_code}"
+
+    def _get_repos(self, username: str) -> Tuple[Optional[List[Dict[str, Any]]], Optional[Tuple[str, str]]]:
         try:
             proxies = get_proxies()
             r = requests.get(
@@ -116,13 +129,13 @@ class GitHubRecon:
                 timeout=15,
                 proxies=proxies,  
             )
-            if r.status_code == 200:
-                return r.json()
-        except Exception:
-            pass
-        return []
+            if r.status_code != 200:
+                return None, self._failure(r.status_code)
+            return r.json(), None
+        except Exception as e:
+            return None, (ERROR, str(e)[:200])
 
-    def _emails_from_events(self, username: str) -> List[str]:
+    def _emails_from_events(self, username: str) -> Tuple[Optional[List[str]], Optional[Tuple[str, str]]]:
         emails: List[str] = []
         try:
             proxies = get_proxies()
@@ -133,15 +146,15 @@ class GitHubRecon:
                 proxies=proxies,  
             )
             if r.status_code != 200:
-                return emails
+                return None, self._failure(r.status_code)
             for event in r.json():
                 for commit in (event.get("payload", {}) or {}).get("commits") or []:
                     email = ((commit.get("author") or {}).get("email") or "").strip()
                     if email and "noreply" not in email and email not in emails:
                         emails.append(email)
-        except Exception:
-            pass
-        return emails
+        except Exception as e:
+            return None, (ERROR, str(e)[:200])
+        return emails, None
 
     def print_result(self, result: Dict[str, Any]) -> None:
         print(f"\n{Colors.CYAN}{'='*60}{Colors.RESET}")
