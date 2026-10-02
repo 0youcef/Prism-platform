@@ -18,7 +18,7 @@ Scan a domain, IP, email, phone or username and get WHOIS, DNS, threat intel, br
 
 > **AI analysis on the [live demo](https://getprism.su) can be slow.** The demo server sits in a region every hosted LLM provider blocks, so its AI calls are routed out through a proxy before they reach a model. It works, it is just slower than a normal instance, so give the summary a minute. A self-hosted instance with your own provider responds at full speed. See [the FAQ](#faq).
 
-> **Also from me:** [Claude Security Skills](https://github.com/NovaCode37/claude-security-skills), eight security skills for Claude Code. Secret scanning, Python SAST, prompt-injection testing, and HTTP, JWT, Dockerfile, CORS and dependency audits. Standard library only, nothing to install.
+> **Also from me:** [Claude Security Skills](https://github.com/NovaCode37/claude-security-skills), eight security skills for Claude Code that also run in CI. New in 1.3.0: a GitHub Action, `uses: NovaCode37/claude-security-skills@v1`, that puts secret-scanning and Python SAST findings on the exact line of your pull request. Standard library only, nothing to install.
 
 
 <div align="center">
