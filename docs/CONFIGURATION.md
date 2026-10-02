@@ -169,6 +169,7 @@ prism.example.com {
 | `ALLOW_ANON_API`     | Allows unauthenticated local/demo API requests without a key | No | `true` for local/demo, `false` for production |
 | `PRISM_DEMO_MODE`    | Shows the public demo notice in the UI | No | `true` only for the demo compose setup |
 | `NUMVERIFY_API_KEY`  | Validates phone numbers                           | No   | Numverify dashboard             |
+| `NUMVERIFY_ALLOW_HTTP` | Retries Numverify over plain HTTP when the plan refuses HTTPS (error 105). Sends the API key and the phone number unencrypted, so anyone on the path, including your proxy, can read both. Off unless set to `1` | No | Only if your Numverify plan has no HTTPS |
 | `LEAK_LOOKUP_API_KEY`| Searches Data Breaches for Leaked Credentials     | No   | LeakLookup API dashboard        |
 | `HIBP_API_KEY`       | Checks if Email/Passwords have been compromised   | No   | HIBP Developer Portal           |
 | `IPINFO_API_KEY`     | Fetches geolocation and ASN details for IP addresses| No | IPInfo.io Dashboard             |
