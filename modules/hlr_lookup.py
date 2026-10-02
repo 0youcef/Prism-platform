@@ -147,6 +147,7 @@ class HLRLookup:
             print(f"{Colors.YELLOW}Timezones:{Colors.RESET} {', '.join(result['timezones'])}")
 
     def reverse_lookup(self, phone: str) -> Dict[str, Any]:
+        from modules.module_status import annotate, ERROR
         result = {
             "phone": phone,
             "names": [],
@@ -154,6 +155,7 @@ class HLRLookup:
             "carrier_confirmed": None,
             "comments": [],
             "sources": [],
+            "sources_failed": [],
             "error": None,
         }
 
@@ -174,8 +176,10 @@ class HLRLookup:
                 if data.get("carrier"):
                     result["carrier_confirmed"] = data["carrier"]
                 result["sources"].append("numlookupapi.com")
-        except Exception:
-            pass
+            else:
+                result["sources_failed"].append({"source": "numlookupapi.com", "reason": f"HTTP {r.status_code}"})
+        except Exception as e:
+            result["sources_failed"].append({"source": "numlookupapi.com", "reason": type(e).__name__})
 
         is_ru = clean.startswith("7") or clean.startswith("89") or clean.startswith("87")
         if is_ru:
@@ -217,8 +221,13 @@ class HLRLookup:
                             if c and c not in result["comments"]:
                                 result["comments"].append(c)
                         result["sources"].append(site_name)
-                except Exception:
-                    pass
+                    else:
+                        result["sources_failed"].append({"source": site_name, "reason": f"HTTP {r.status_code}"})
+                except Exception as e:
+                    result["sources_failed"].append({"source": site_name, "reason": type(e).__name__})
+                    
+        if result["sources_failed"] and not result["sources"]:
+            annotate(result, ERROR, "All reverse lookup sources failed")
 
         return result
 
