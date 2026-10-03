@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 import re
 import requests as _requests
+import httpx
 import logging
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, Depends, HTTPException, Request
@@ -295,7 +296,7 @@ def _is_public_ip(addr) -> bool:
         or addr.is_link_local or addr.is_multicast or addr.is_unspecified
     )
 
-def _resolve_all_public(hostname: str) -> None:
+def _resolve_all_public(hostname: str) -> str:
     import ipaddress
     import socket
     try:
@@ -311,8 +312,9 @@ def _resolve_all_public(hostname: str) -> None:
             raise ValueError("webhook_url resolved to an invalid address")
         if not _is_public_ip(addr):
             raise ValueError("webhook_url resolves to a private/internal address")
-        return
+        return str(addr)
     seen = set()
+    first_public = None
     for fam, _t, _p, _c, sa in infos:
         ip_str = sa[0]
         if ip_str in seen:
@@ -324,8 +326,12 @@ def _resolve_all_public(hostname: str) -> None:
             raise ValueError("webhook_url resolved to an invalid address")
         if not _is_public_ip(addr):
             raise ValueError("webhook_url resolves to a private/internal address")
+        if first_public is None:
+            first_public = str(addr)
     if not seen:
         raise ValueError("webhook_url hostname did not resolve")
+    return first_public
+
 
 def _validate_webhook_url(url: str) -> str:
     from urllib.parse import urlparse
@@ -335,10 +341,6 @@ def _validate_webhook_url(url: str) -> str:
     if parsed.scheme not in ("http", "https") or not parsed.hostname:
         raise ValueError("webhook_url must be http(s) with a hostname")
     _resolve_all_public(parsed.hostname)
-    try:
-        _requests.head(url, timeout=3, allow_redirects=False)
-    except Exception:
-        pass
     return url
 
 def _run_watchlist_once(entry: Dict[str, Any]) -> None:
@@ -393,12 +395,13 @@ def _start_watchlist_scheduler() -> None:
 
 def _send_webhook(url: str, payload: Dict[str, Any]) -> None:
     from urllib.parse import urlparse
-    parsed = urlparse(url)
-    if parsed.scheme not in ("http", "https") or not parsed.hostname:
-        return
     try:
-        _resolve_all_public(parsed.hostname)
-    except ValueError:
+        parsed = urlparse(url)
+        original_url = httpx.URL(url)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname:
+            return
+        pinned_ip = _resolve_all_public(parsed.hostname)
+    except Exception:
         return
 
     webhook_format = os.environ.get("WEBHOOK_FORMAT", "raw")
@@ -410,11 +413,23 @@ def _send_webhook(url: str, payload: Dict[str, Any]) -> None:
     headers = {"Content-Type": "application/json", "User-Agent": USER_AGENT}
     if WEBHOOK_SECRET:
         headers["X-Prism-Secret"] = WEBHOOK_SECRET
+    original_host = original_url.raw_host.decode("ascii")
+    host_header = f"[{original_host}]" if ":" in original_host else original_host
+    if original_url.port is not None:
+        host_header = f"{host_header}:{original_url.port}"
+    headers["Host"] = host_header
     try:
-        _requests.post(
-            url, json=payload, headers=headers,
-            timeout=10, allow_redirects=False,
-        )
+        with httpx.Client(
+            timeout=10, follow_redirects=False, trust_env=False, verify=True,
+        ) as client:
+            request = client.build_request(
+                "POST",
+                original_url.copy_with(host=pinned_ip),
+                json=payload,
+                headers=headers,
+                extensions={"sni_hostname": original_host},
+            )
+            client.send(request, follow_redirects=False)
     except Exception:
         pass
 
