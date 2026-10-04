@@ -25,7 +25,7 @@ Scan a domain, IP, email, phone or username and get WHOIS, DNS, threat intel, br
 
 ### Table of Contents
 
-[Why PRISM?](#why-prism) • [Overview](#overview) • [How it compares](#how-it-compares) • [Use cases](#use-cases) • [Features](#features) • [Showcase](#showcase) • [Quick Start](#quick-start) • [Configuration](#configuration) • [API](#api) • [Project Structure](#project-structure) • [Running Tests](#running-tests) • [CI/CD](#cicd) • [Roadmap](#roadmap) • [Star History](#star-history) • [Legal Notice](#legal-notice) • [Support the project](#support-the-project) • [Contributing](#contributing) • [Credits](#credits) • [License](#license)
+[Why PRISM?](#why-prism) • [Overview](#overview) • [How it compares](#how-it-compares) • [Use cases](#use-cases) • [Features](#features) • [Screenshots](#screenshots) • [Quick Start](#quick-start) • [Configuration](#configuration) • [API](#api) • [Project Structure](#project-structure) • [Running Tests](#running-tests) • [CI/CD](#cicd) • [Roadmap](#roadmap) • [Star History](#star-history) • [Legal Notice](#legal-notice) • [Support the project](#support-the-project) • [Contributing](#contributing) • [Credits](#credits) • [License](#license)
 
 </div>
 
@@ -140,7 +140,7 @@ Infostealer Exposure and Domain Exposure are off unless you set `HUDSONROCK_ENAB
 
 ---
 
-## Showcase
+## Screenshots
 
 <p align="center">
   <img src="docs/gifs/scan_showcase.gif" alt="Scan Progress" width="720" />
@@ -477,7 +477,7 @@ You are responsible for how you use the results. The author assumes no liability
 
 ## Support the project
 
-If PRISM is useful to you, a ⭐ is the best free way to help. If you'd like to support development financially:
+If PRISM is useful to you, a star is the best free way to help. If you'd like to support development financially:
 
 - **[DonationAlerts](https://dalink.to/novastro)**
 - **[DonatePay](https://donatepay.ru/don/1532982)** (card, RU wallets, and more)
