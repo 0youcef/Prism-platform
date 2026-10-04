@@ -40,8 +40,6 @@ def _server_error(e: Exception, context: str, status_code: int = 500) -> JSONRes
     logger.exception("%s failed", context)
     return JSONResponse({"error": "Internal server error"}, status_code=status_code)
 
-# LLM configuration has been moved to config.py to share with other agents
-
 
 def llm_providers() -> List[Dict[str, str]]:
     providers = []

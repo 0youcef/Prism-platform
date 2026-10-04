@@ -15,7 +15,6 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 CENSYS_API_ID = os.getenv("CENSYS_API_ID", "")
 CENSYS_API_SECRET = os.getenv("CENSYS_API_SECRET", "")
 
-# LLM Configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
